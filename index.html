@@ -1,0 +1,1462 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>番茄钟</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg-top: #fff3eb;
+      --bg-bottom: #f8d4c2;
+      --card: rgba(255, 252, 249, 0.78);
+      --card-border: rgba(255, 255, 255, 0.62);
+      --text-main: #4f1e17;
+      --text-muted: #8c5b52;
+      --accent: #d94b3d;
+      --accent-strong: #b73126;
+      --accent-soft: rgba(217, 75, 61, 0.14);
+      --accent-glow: rgba(217, 75, 61, 0.32);
+      --shadow: 0 26px 70px rgba(130, 49, 36, 0.18);
+      --ring-track: rgba(138, 61, 48, 0.1);
+      --button-alt: rgba(255, 255, 255, 0.72);
+      --success: #346d52;
+      --surface-strong: rgba(255, 255, 255, 0.88);
+      --field-border: rgba(169, 88, 74, 0.18);
+      --danger: #96362c;
+      --pattern: rgba(255, 255, 255, 0.22);
+      --mode-highlight: #ffe4dc;
+      font-family: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    body[data-mode="shortBreak"] {
+      --bg-top: #eef8ef;
+      --bg-bottom: #d3eedf;
+      --card: rgba(248, 255, 249, 0.8);
+      --text-main: #194a33;
+      --text-muted: #5b8570;
+      --accent: #3f9b6a;
+      --accent-strong: #2d7950;
+      --accent-soft: rgba(63, 155, 106, 0.14);
+      --accent-glow: rgba(63, 155, 106, 0.24);
+      --ring-track: rgba(37, 117, 75, 0.11);
+      --field-border: rgba(63, 155, 106, 0.18);
+      --mode-highlight: #ddf4e6;
+    }
+
+    body[data-mode="longBreak"] {
+      --bg-top: #eef1ff;
+      --bg-bottom: #d8def7;
+      --card: rgba(248, 250, 255, 0.8);
+      --text-main: #24316d;
+      --text-muted: #6270a2;
+      --accent: #5064d5;
+      --accent-strong: #3749a9;
+      --accent-soft: rgba(80, 100, 213, 0.14);
+      --accent-glow: rgba(80, 100, 213, 0.24);
+      --ring-track: rgba(80, 100, 213, 0.11);
+      --field-border: rgba(80, 100, 213, 0.18);
+      --mode-highlight: #e4e9ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at top left, var(--pattern) 0 2px, transparent 2px 12px),
+        radial-gradient(circle at 12% 15%, rgba(255, 255, 255, 0.75), transparent 28%),
+        radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.55), transparent 20%),
+        linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+      background-size: 24px 24px, auto, auto, auto;
+      color: var(--text-main);
+      transition: background 0.4s ease, color 0.4s ease;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      width: 28rem;
+      height: 28rem;
+      border-radius: 50%;
+      filter: blur(22px);
+      opacity: 0.35;
+      z-index: 0;
+      pointer-events: none;
+      background: var(--accent-glow);
+    }
+
+    body::before {
+      top: -10rem;
+      right: -8rem;
+    }
+
+    body::after {
+      bottom: -12rem;
+      left: -10rem;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+    }
+
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      width: 64px;
+      height: 64px;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 50% 36%, #ffb49d 0 12%, transparent 12%),
+        linear-gradient(160deg, var(--accent), var(--accent-strong));
+      position: relative;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), 0 16px 30px var(--accent-glow);
+    }
+
+    .brand-mark::before {
+      content: "";
+      position: absolute;
+      top: 8px;
+      left: 22px;
+      width: 20px;
+      height: 14px;
+      border-radius: 999px 999px 2px 999px;
+      background: linear-gradient(180deg, #5fab61, #367445);
+      transform: rotate(-16deg);
+    }
+
+    .brand-text h1 {
+      margin: 0;
+      font-size: clamp(1.9rem, 4vw, 3rem);
+      letter-spacing: 0.02em;
+    }
+
+    .brand-text p {
+      margin: 4px 0 0;
+      color: var(--text-muted);
+      font-size: 0.98rem;
+      max-width: 32rem;
+      line-height: 1.55;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+      align-items: flex-start;
+      max-width: 28rem;
+    }
+
+    .notify-stack {
+      display: grid;
+      gap: 10px;
+      justify-items: end;
+    }
+
+    .notification-status {
+      width: min(100%, 28rem);
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.76);
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.6;
+      box-shadow: 0 10px 24px rgba(111, 49, 38, 0.08);
+    }
+
+    .notification-status[data-state="idle"] {
+      color: var(--text-muted);
+    }
+
+    .notification-status[data-state="pending"] {
+      color: var(--accent-strong);
+      border-color: rgba(217, 75, 61, 0.26);
+      background: rgba(255, 247, 244, 0.92);
+    }
+
+    .notification-status[data-state="success"] {
+      color: var(--success);
+      border-color: rgba(52, 109, 82, 0.24);
+      background: rgba(235, 248, 239, 0.96);
+    }
+
+    .notification-status[data-state="error"] {
+      color: var(--danger);
+      border-color: rgba(150, 54, 44, 0.26);
+      background: rgba(255, 241, 238, 0.96);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
+      gap: 22px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      box-shadow: var(--shadow);
+      border-radius: 28px;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .timer-panel {
+      padding: 22px;
+      display: grid;
+      gap: 22px;
+    }
+
+    .mode-switch {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .mode-button {
+      border: 1px solid transparent;
+      border-radius: 18px;
+      padding: 14px 12px;
+      background: rgba(255, 255, 255, 0.52);
+      color: var(--text-main);
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      text-align: left;
+    }
+
+    .mode-button strong,
+    .mode-button span {
+      display: block;
+    }
+
+    .mode-button strong {
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    .mode-button span {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    .mode-button:hover,
+    .mode-button:focus-visible {
+      transform: translateY(-1px);
+      outline: none;
+      border-color: var(--field-border);
+    }
+
+    .mode-button.active {
+      background: var(--mode-highlight);
+      border-color: rgba(255, 255, 255, 0.74);
+      box-shadow: inset 0 0 0 1px var(--accent-soft), 0 12px 24px var(--accent-soft);
+    }
+
+    .task-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.92rem;
+      margin-bottom: 8px;
+      color: var(--text-muted);
+    }
+
+    .field,
+    .settings-grid input {
+      width: 100%;
+      border: 1px solid var(--field-border);
+      background: rgba(255, 255, 255, 0.75);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font: inherit;
+      color: var(--text-main);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .field:focus,
+    .settings-grid input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+      transform: translateY(-1px);
+    }
+
+    .hint-chip {
+      align-self: center;
+      justify-self: end;
+      white-space: nowrap;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 0.86rem;
+      color: var(--text-muted);
+    }
+
+    .timer-hero {
+      position: relative;
+      min-height: 420px;
+      display: grid;
+      place-items: center;
+      padding: 8px;
+      overflow: hidden;
+      border-radius: 30px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.55));
+    }
+
+    .timer-hero::before {
+      content: "";
+      position: absolute;
+      width: 56%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--accent-soft), transparent 68%);
+      filter: blur(6px);
+    }
+
+    .ring {
+      width: min(100%, 420px);
+      aspect-ratio: 1;
+      transform: rotate(-90deg);
+      overflow: visible;
+      filter: drop-shadow(0 22px 28px var(--accent-soft));
+    }
+
+    .ring circle {
+      fill: none;
+      stroke-width: 12;
+      cx: 120;
+      cy: 120;
+      r: 92;
+    }
+
+    .ring-track {
+      stroke: var(--ring-track);
+    }
+
+    .ring-progress {
+      stroke: url(#ringGradient);
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.25s linear;
+    }
+
+    .timer-content {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .mode-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      margin-bottom: 18px;
+      font-size: 0.9rem;
+    }
+
+    .mode-badge::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 5px var(--accent-soft);
+    }
+
+    .time {
+      font-size: clamp(4rem, 11vw, 6.7rem);
+      line-height: 1;
+      letter-spacing: 0.05em;
+      font-variant-numeric: tabular-nums;
+      margin: 0;
+      text-indent: 0.05em;
+    }
+
+    .timer-note {
+      margin: 12px auto 0;
+      max-width: 20rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .button {
+      border: none;
+      border-radius: 999px;
+      padding: 13px 18px;
+      min-width: 108px;
+      font: inherit;
+      cursor: pointer;
+      background: var(--button-alt);
+      color: var(--text-main);
+      box-shadow: 0 10px 20px rgba(111, 49, 38, 0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+    }
+
+    .button:hover,
+    .button:focus-visible {
+      transform: translateY(-1px);
+      outline: none;
+      box-shadow: 0 14px 24px rgba(111, 49, 38, 0.12);
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .button.primary {
+      background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+      color: #fff9f7;
+      box-shadow: 0 18px 28px var(--accent-glow);
+    }
+
+    .button.ghost {
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .button.warn {
+      background: rgba(150, 54, 44, 0.12);
+      color: var(--danger);
+    }
+
+    .status-bar {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini-card {
+      background: rgba(255, 255, 255, 0.58);
+      border-radius: 20px;
+      padding: 16px;
+      border: 1px solid var(--card-border);
+    }
+
+    .mini-card span {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+
+    .mini-card strong {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .sidebar {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .card {
+      padding: 22px;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .card-head h2 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .card-head p {
+      margin: 6px 0 0;
+      color: var(--text-muted);
+      line-height: 1.5;
+      font-size: 0.93rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      background: rgba(255, 255, 255, 0.62);
+      border-radius: 20px;
+      padding: 16px;
+      border: 1px solid var(--card-border);
+      min-height: 106px;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.9rem;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+
+    .stat small {
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: block;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .settings-grid label {
+      display: block;
+    }
+
+    .settings-grid span {
+      display: block;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .settings-actions,
+    .history-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 12px;
+      max-height: 420px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .history-item,
+    .history-empty {
+      background: rgba(255, 255, 255, 0.58);
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      padding: 16px;
+    }
+
+    .history-item {
+      display: grid;
+      gap: 8px;
+    }
+
+    .history-item strong {
+      font-size: 1rem;
+      line-height: 1.4;
+    }
+
+    .history-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .history-empty {
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .hero-actions {
+        justify-content: flex-start;
+      }
+
+      .notify-stack {
+        justify-items: start;
+      }
+    }
+
+    @media (max-width: 740px) {
+      .page {
+        padding: 18px 14px 28px;
+      }
+
+      .timer-panel,
+      .card {
+        padding: 18px;
+        border-radius: 24px;
+      }
+
+      .task-row,
+      .stats-grid,
+      .settings-grid,
+      .status-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .mode-switch {
+        grid-template-columns: 1fr;
+      }
+
+      .time {
+        font-size: clamp(3.4rem, 18vw, 5rem);
+      }
+
+      .timer-hero {
+        min-height: 360px;
+      }
+
+      .controls {
+        justify-content: stretch;
+      }
+
+      .button {
+        width: 100%;
+      }
+
+      .hero-actions .button {
+        width: auto;
+      }
+
+      .notification-status {
+        width: 100%;
+      }
+
+      .hint-chip {
+        justify-self: stretch;
+        text-align: center;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body data-mode="focus">
+  <main class="page">
+    <section class="hero">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text">
+          <h1>番茄钟</h1>
+          <p>把注意力集中在一件事上。专注结束后自动安排休息，今天做过的每一个番茄都会帮你记下来。</p>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <div class="notify-stack">
+          <button class="button ghost" id="notifyButton" type="button">开启浏览器提醒</button>
+          <div class="notification-status" id="notificationStatus" data-state="idle" role="status" aria-live="polite">
+            通知状态：尚未授权。点击按钮后会弹出浏览器授权窗口。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="panel timer-panel">
+        <div class="mode-switch" id="modeSwitch">
+          <button class="mode-button active" data-mode="focus" type="button">
+            <strong>专注</strong>
+            <span id="focusModeText">25 分钟</span>
+          </button>
+          <button class="mode-button" data-mode="shortBreak" type="button">
+            <strong>短休息</strong>
+            <span id="shortBreakModeText">5 分钟</span>
+          </button>
+          <button class="mode-button" data-mode="longBreak" type="button">
+            <strong>长休息</strong>
+            <span id="longBreakModeText">15 分钟</span>
+          </button>
+        </div>
+
+        <div class="task-row">
+          <label>
+            <span class="field-label">当前任务</span>
+            <input class="field" id="taskInput" type="text" maxlength="80" placeholder="开始专注前，写下你现在要完成的事">
+          </label>
+          <div class="hint-chip" id="streakChip">距离长休息还有 4 个番茄</div>
+        </div>
+
+        <section class="timer-hero" aria-label="番茄钟倒计时">
+          <svg class="ring" viewBox="0 0 240 240" aria-hidden="true">
+            <defs>
+              <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="var(--accent)"></stop>
+                <stop offset="100%" stop-color="var(--accent-strong)"></stop>
+              </linearGradient>
+            </defs>
+            <circle class="ring-track" cx="120" cy="120" r="92"></circle>
+            <circle class="ring-progress" id="progressRing" cx="120" cy="120" r="92"></circle>
+          </svg>
+          <div class="timer-content">
+            <div>
+              <div class="mode-badge" id="modeBadge">现在是专注时间</div>
+              <p class="time" id="timeDisplay">25:00</p>
+              <p class="timer-note" id="timerNote">先选一个任务，然后按开始。完成后会自动记录这次专注。</p>
+            </div>
+          </div>
+        </section>
+
+        <div class="controls">
+          <button class="button primary" id="startButton" type="button">开始</button>
+          <button class="button" id="pauseButton" type="button" disabled>暂停</button>
+          <button class="button ghost" id="resetButton" type="button">重置</button>
+        </div>
+
+        <div class="status-bar">
+          <div class="mini-card">
+            <span>已完成专注</span>
+            <strong id="completedFocusText">0 个</strong>
+          </div>
+          <div class="mini-card">
+            <span>当前状态</span>
+            <strong id="runStateText">待开始</strong>
+          </div>
+          <div class="mini-card">
+            <span>最近提示</span>
+            <strong id="statusMessageText">准备好后就开始吧</strong>
+          </div>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <section class="panel card">
+          <div class="card-head">
+            <div>
+              <h2>统计报告</h2>
+              <p>这里会根据你的历史记录，自动汇总今天做了多少个番茄、总共投入了多久。</p>
+            </div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat">
+              <span>今日番茄数</span>
+              <strong id="todayCount">0</strong>
+              <small>只统计今天完成的专注。</small>
+            </div>
+            <div class="stat">
+              <span>总专注时长</span>
+              <strong id="totalMinutes">0 分钟</strong>
+              <small>累计所有已完成番茄的时长。</small>
+            </div>
+            <div class="stat">
+              <span>下次长休息</span>
+              <strong id="nextLongBreak">4 个后</strong>
+              <small>每完成 4 个专注，系统会自动切到长休息。</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel card">
+          <div class="card-head">
+            <div>
+              <h2>设置面板</h2>
+              <p>修改三种模式的分钟数。保存后会记住，下次打开页面也还在。</p>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <label>
+              <span>专注</span>
+              <input id="focusInput" type="number" min="1" max="180" step="1">
+            </label>
+            <label>
+              <span>短休息</span>
+              <input id="shortBreakInput" type="number" min="1" max="60" step="1">
+            </label>
+            <label>
+              <span>长休息</span>
+              <input id="longBreakInput" type="number" min="1" max="120" step="1">
+            </label>
+          </div>
+          <div class="settings-actions">
+            <button class="button primary" id="saveSettingsButton" type="button">保存时长</button>
+            <button class="button ghost" id="resetSettingsButton" type="button">恢复默认</button>
+          </div>
+        </section>
+
+        <section class="panel card">
+          <div class="card-head">
+            <div>
+              <h2>历史任务</h2>
+              <p>每次专注完成后，都会记录任务名、完成时间和本次时长。</p>
+            </div>
+            <div class="history-actions">
+              <button class="button warn" id="clearHistoryButton" type="button">清空记录</button>
+            </div>
+          </div>
+          <div class="history-list" id="historyList"></div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const STORAGE_KEYS = {
+        settings: "pomodoro-settings-v1",
+        history: "pomodoro-history-v1"
+      };
+
+      const DEFAULT_SETTINGS = {
+        focus: 25,
+        shortBreak: 5,
+        longBreak: 15
+      };
+
+      const MODE_META = {
+        focus: {
+          label: "专注",
+          badge: "现在是专注时间",
+          note: "先选一个任务，然后按开始。完成后会自动记录这次专注。"
+        },
+        shortBreak: {
+          label: "短休息",
+          badge: "现在是短休息",
+          note: "离开屏幕几分钟，放松一下眼睛和肩膀。"
+        },
+        longBreak: {
+          label: "长休息",
+          badge: "现在是长休息",
+          note: "已经做完一组番茄，给自己一段更完整的恢复时间。"
+        }
+      };
+
+      const circumference = 2 * Math.PI * 92;
+
+      const elements = {
+        body: document.body,
+        modeSwitch: document.getElementById("modeSwitch"),
+        modeButtons: Array.from(document.querySelectorAll(".mode-button")),
+        focusModeText: document.getElementById("focusModeText"),
+        shortBreakModeText: document.getElementById("shortBreakModeText"),
+        longBreakModeText: document.getElementById("longBreakModeText"),
+        taskInput: document.getElementById("taskInput"),
+        streakChip: document.getElementById("streakChip"),
+        progressRing: document.getElementById("progressRing"),
+        modeBadge: document.getElementById("modeBadge"),
+        timeDisplay: document.getElementById("timeDisplay"),
+        timerNote: document.getElementById("timerNote"),
+        startButton: document.getElementById("startButton"),
+        pauseButton: document.getElementById("pauseButton"),
+        resetButton: document.getElementById("resetButton"),
+        completedFocusText: document.getElementById("completedFocusText"),
+        runStateText: document.getElementById("runStateText"),
+        statusMessageText: document.getElementById("statusMessageText"),
+        todayCount: document.getElementById("todayCount"),
+        totalMinutes: document.getElementById("totalMinutes"),
+        nextLongBreak: document.getElementById("nextLongBreak"),
+        focusInput: document.getElementById("focusInput"),
+        shortBreakInput: document.getElementById("shortBreakInput"),
+        longBreakInput: document.getElementById("longBreakInput"),
+        saveSettingsButton: document.getElementById("saveSettingsButton"),
+        resetSettingsButton: document.getElementById("resetSettingsButton"),
+        notifyButton: document.getElementById("notifyButton"),
+        notificationStatus: document.getElementById("notificationStatus"),
+        historyList: document.getElementById("historyList"),
+        clearHistoryButton: document.getElementById("clearHistoryButton")
+      };
+
+      const state = {
+        settings: loadSettings(),
+        history: loadHistory(),
+        mode: "focus",
+        remainingSeconds: 0,
+        totalSeconds: 0,
+        isRunning: false,
+        timerId: null,
+        endsAt: 0,
+        focusStreak: 0,
+        activeTaskName: "",
+        statusMessage: "准备好后就开始吧",
+        audioContext: null,
+        notificationFeedbackState: "idle",
+        notificationFeedbackText: ""
+      };
+
+      elements.progressRing.style.strokeDasharray = String(circumference);
+      state.totalSeconds = getModeDurationSeconds(state.mode);
+      state.remainingSeconds = state.totalSeconds;
+
+      hydrateSettingsForm();
+      renderModeDurations();
+      renderHistory();
+      renderStats();
+      renderTimer();
+      renderNotificationStatus();
+
+      elements.modeSwitch.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-mode]");
+        if (!button) {
+          return;
+        }
+        switchMode(button.dataset.mode, {
+          manual: true,
+          clearTask: state.mode === "focus" && state.remainingSeconds !== state.totalSeconds
+        });
+      });
+
+      elements.startButton.addEventListener("click", startTimer);
+      elements.pauseButton.addEventListener("click", pauseTimer);
+      elements.resetButton.addEventListener("click", () => {
+        resetCurrentMode();
+        setStatus("已重置当前倒计时");
+      });
+
+      elements.saveSettingsButton.addEventListener("click", saveSettings);
+      elements.resetSettingsButton.addEventListener("click", restoreDefaults);
+      elements.notifyButton.addEventListener("click", requestNotificationPermission);
+
+      elements.clearHistoryButton.addEventListener("click", () => {
+        if (!state.history.length) {
+          setStatus("现在还没有可清空的记录");
+          return;
+        }
+        if (!window.confirm("确定要清空所有历史任务吗？")) {
+          return;
+        }
+        state.history = [];
+        persist(STORAGE_KEYS.history, state.history);
+        renderHistory();
+        renderStats();
+        setStatus("历史记录已清空");
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (state.isRunning) {
+          syncRemainingTime();
+          renderTimer();
+        }
+      });
+
+      function loadSettings() {
+        const parsed = readStorage(STORAGE_KEYS.settings);
+        return {
+          focus: sanitizeMinutes(parsed && parsed.focus, DEFAULT_SETTINGS.focus, 1, 180),
+          shortBreak: sanitizeMinutes(parsed && parsed.shortBreak, DEFAULT_SETTINGS.shortBreak, 1, 60),
+          longBreak: sanitizeMinutes(parsed && parsed.longBreak, DEFAULT_SETTINGS.longBreak, 1, 120)
+        };
+      }
+
+      function loadHistory() {
+        const parsed = readStorage(STORAGE_KEYS.history);
+        return Array.isArray(parsed) ? parsed.filter(isValidHistoryItem) : [];
+      }
+
+      function isValidHistoryItem(item) {
+        return item &&
+          typeof item.taskName === "string" &&
+          typeof item.completedAt === "string" &&
+          typeof item.durationMinutes === "number";
+      }
+
+      function readStorage(key) {
+        try {
+          const raw = window.localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : null;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function persist(key, value) {
+        try {
+          window.localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+          setStatus("本地保存失败，可能是浏览器存储受限");
+        }
+      }
+
+      function sanitizeMinutes(value, fallback, min, max) {
+        if (value === null || value === undefined || value === "") {
+          return fallback;
+        }
+
+        const number = Number(value);
+        if (!Number.isFinite(number)) {
+          return fallback;
+        }
+        return Math.min(max, Math.max(min, Math.round(number)));
+      }
+
+      function hydrateSettingsForm() {
+        elements.focusInput.value = String(state.settings.focus);
+        elements.shortBreakInput.value = String(state.settings.shortBreak);
+        elements.longBreakInput.value = String(state.settings.longBreak);
+      }
+
+      function renderModeDurations() {
+        elements.focusModeText.textContent = state.settings.focus + " 分钟";
+        elements.shortBreakModeText.textContent = state.settings.shortBreak + " 分钟";
+        elements.longBreakModeText.textContent = state.settings.longBreak + " 分钟";
+      }
+
+      function formatTime(totalSeconds) {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+      }
+
+      function getModeDurationSeconds(mode) {
+        return state.settings[mode] * 60;
+      }
+
+      function getRemainingToLongBreak() {
+        const remainder = state.focusStreak % 4;
+        return remainder === 0 ? 4 : 4 - remainder;
+      }
+
+      function renderTimer() {
+        const meta = MODE_META[state.mode];
+        const progress = state.totalSeconds === 0 ? 0 : 1 - (state.remainingSeconds / state.totalSeconds);
+        const offset = circumference * (1 - progress);
+
+        elements.body.dataset.mode = state.mode;
+        elements.timeDisplay.textContent = formatTime(state.remainingSeconds);
+        elements.modeBadge.textContent = meta.badge;
+        elements.timerNote.textContent = meta.note;
+        elements.progressRing.style.strokeDashoffset = String(offset);
+        elements.startButton.disabled = state.isRunning;
+        elements.pauseButton.disabled = !state.isRunning;
+        elements.modeButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.mode === state.mode);
+        });
+        elements.completedFocusText.textContent = String(state.focusStreak) + " 个";
+        elements.runStateText.textContent = state.isRunning ? "计时中" : "待开始";
+        elements.statusMessageText.textContent = state.statusMessage;
+        elements.streakChip.textContent = "距离长休息还有 " + getRemainingToLongBreak() + " 个番茄";
+
+        const titlePrefix = formatTime(state.remainingSeconds) + " · " + meta.label;
+        document.title = state.isRunning ? titlePrefix : "番茄钟 · " + meta.label + " " + formatTime(state.remainingSeconds);
+      }
+
+      function renderStats() {
+        const todayKey = new Date().toDateString();
+        const todayCount = state.history.filter((item) => new Date(item.completedAt).toDateString() === todayKey).length;
+        const totalMinutes = state.history.reduce((sum, item) => sum + item.durationMinutes, 0);
+        const remaining = getRemainingToLongBreak();
+
+        elements.todayCount.textContent = String(todayCount);
+        elements.totalMinutes.textContent = totalMinutes + " 分钟";
+        elements.nextLongBreak.textContent = remaining + " 个后";
+      }
+
+      function renderHistory() {
+        const list = elements.historyList;
+        list.innerHTML = "";
+
+        if (!state.history.length) {
+          const empty = document.createElement("div");
+          empty.className = "history-empty";
+          empty.textContent = "还没有历史任务。完成第一个专注后，这里会自动出现记录。";
+          list.appendChild(empty);
+          return;
+        }
+
+        state.history.forEach((item) => {
+          const entry = document.createElement("article");
+          entry.className = "history-item";
+
+          const title = document.createElement("strong");
+          title.textContent = item.taskName || "未命名任务";
+
+          const meta = document.createElement("div");
+          meta.className = "history-meta";
+          meta.innerHTML =
+            "<span>完成时间：" + formatDateTime(item.completedAt) + "</span>" +
+            "<span>时长：" + item.durationMinutes + " 分钟</span>";
+
+          entry.appendChild(title);
+          entry.appendChild(meta);
+          list.appendChild(entry);
+        });
+      }
+
+      function formatDateTime(isoString) {
+        const date = new Date(isoString);
+        return new Intl.DateTimeFormat("zh-CN", {
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        }).format(date);
+      }
+
+      function setStatus(message) {
+        state.statusMessage = message;
+        renderTimer();
+      }
+
+      function switchMode(mode, options = {}) {
+        clearTimer();
+        state.mode = mode;
+        state.totalSeconds = getModeDurationSeconds(mode);
+        state.remainingSeconds = state.totalSeconds;
+        state.isRunning = false;
+        state.endsAt = 0;
+        if (options.clearTask) {
+          state.activeTaskName = "";
+        }
+        if (options.manual) {
+          setStatus("已切换到" + MODE_META[mode].label);
+        } else {
+          renderTimer();
+        }
+      }
+
+      async function startTimer() {
+        if (state.isRunning) {
+          return;
+        }
+
+        if (state.mode === "focus" && state.remainingSeconds === state.totalSeconds) {
+          state.activeTaskName = normalizeTaskName(elements.taskInput.value);
+        }
+
+        await ensureAudioContext();
+        syncRemainingTime();
+        state.isRunning = true;
+        state.endsAt = Date.now() + state.remainingSeconds * 1000;
+        state.timerId = window.setInterval(tick, 250);
+        setStatus("正在" + MODE_META[state.mode].label);
+      }
+
+      function pauseTimer() {
+        if (!state.isRunning) {
+          return;
+        }
+        syncRemainingTime();
+        clearTimer();
+        state.isRunning = false;
+        state.endsAt = 0;
+        setStatus("已暂停");
+      }
+
+      function resetCurrentMode() {
+        clearTimer();
+        state.isRunning = false;
+        state.endsAt = 0;
+        state.remainingSeconds = state.totalSeconds;
+        if (state.mode === "focus") {
+          state.activeTaskName = "";
+        }
+        renderTimer();
+      }
+
+      function clearTimer() {
+        if (state.timerId) {
+          window.clearInterval(state.timerId);
+          state.timerId = null;
+        }
+      }
+
+      function tick() {
+        syncRemainingTime();
+        renderTimer();
+        if (state.remainingSeconds <= 0) {
+          finishTimer();
+        }
+      }
+
+      function syncRemainingTime() {
+        if (!state.isRunning || !state.endsAt) {
+          return;
+        }
+        state.remainingSeconds = Math.max(0, Math.ceil((state.endsAt - Date.now()) / 1000));
+      }
+
+      function finishTimer() {
+        clearTimer();
+        state.isRunning = false;
+        state.endsAt = 0;
+
+        const finishedMode = state.mode;
+        const finishedLabel = MODE_META[finishedMode].label;
+
+        playAlertTone();
+
+        if (finishedMode === "focus") {
+          state.focusStreak += 1;
+          addHistoryRecord();
+          const nextMode = state.focusStreak % 4 === 0 ? "longBreak" : "shortBreak";
+          const completedTask = state.activeTaskName || normalizeTaskName(elements.taskInput.value);
+          elements.taskInput.value = "";
+          state.activeTaskName = "";
+          switchMode(nextMode);
+          notifyUser("专注完成", "任务「" + completedTask + "」已完成，开始" + MODE_META[nextMode].label + "。");
+          setStatus("已完成专注，切换到" + MODE_META[nextMode].label);
+        } else {
+          switchMode("focus");
+          notifyUser(finishedLabel + "结束", "休息时间到了，回到下一轮专注吧。");
+          setStatus(finishedLabel + "结束，回到专注");
+        }
+
+        renderHistory();
+        renderStats();
+      }
+
+      function normalizeTaskName(value) {
+        const trimmed = String(value || "").trim().replace(/\s+/g, " ");
+        return trimmed || "未命名任务";
+      }
+
+      function addHistoryRecord() {
+        const durationMinutes = Math.round(state.totalSeconds / 60);
+        state.history.unshift({
+          taskName: state.activeTaskName || normalizeTaskName(elements.taskInput.value),
+          completedAt: new Date().toISOString(),
+          durationMinutes
+        });
+        persist(STORAGE_KEYS.history, state.history);
+      }
+
+      function saveSettings() {
+        const nextSettings = {
+          focus: sanitizeMinutes(elements.focusInput.value, state.settings.focus, 1, 180),
+          shortBreak: sanitizeMinutes(elements.shortBreakInput.value, state.settings.shortBreak, 1, 60),
+          longBreak: sanitizeMinutes(elements.longBreakInput.value, state.settings.longBreak, 1, 120)
+        };
+
+        state.settings = nextSettings;
+        persist(STORAGE_KEYS.settings, state.settings);
+        hydrateSettingsForm();
+        renderModeDurations();
+
+        if (!state.isRunning) {
+          state.totalSeconds = getModeDurationSeconds(state.mode);
+          state.remainingSeconds = state.totalSeconds;
+          renderTimer();
+        }
+
+        setStatus("新的时长已经保存");
+      }
+
+      function restoreDefaults() {
+        state.settings = { ...DEFAULT_SETTINGS };
+        persist(STORAGE_KEYS.settings, state.settings);
+        hydrateSettingsForm();
+        renderModeDurations();
+
+        if (!state.isRunning) {
+          state.totalSeconds = getModeDurationSeconds(state.mode);
+          state.remainingSeconds = state.totalSeconds;
+          renderTimer();
+        }
+
+        setStatus("已恢复默认时长");
+      }
+
+      async function ensureAudioContext() {
+        if (!window.AudioContext && !window.webkitAudioContext) {
+          return;
+        }
+
+        if (!state.audioContext) {
+          const AudioCtor = window.AudioContext || window.webkitAudioContext;
+          state.audioContext = new AudioCtor();
+        }
+
+        if (state.audioContext.state === "suspended") {
+          try {
+            await state.audioContext.resume();
+          } catch (error) {
+            return;
+          }
+        }
+      }
+
+      function playAlertTone() {
+        if (!state.audioContext) {
+          return;
+        }
+
+        const now = state.audioContext.currentTime;
+        [0, 0.22, 0.44].forEach((startOffset, index) => {
+          const oscillator = state.audioContext.createOscillator();
+          const gain = state.audioContext.createGain();
+          oscillator.type = index === 1 ? "triangle" : "sine";
+          oscillator.frequency.value = index === 1 ? 660 : 880;
+          gain.gain.setValueAtTime(0.0001, now + startOffset);
+          gain.gain.exponentialRampToValueAtTime(0.2, now + startOffset + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + startOffset + 0.18);
+          oscillator.connect(gain);
+          gain.connect(state.audioContext.destination);
+          oscillator.start(now + startOffset);
+          oscillator.stop(now + startOffset + 0.2);
+        });
+      }
+
+      async function requestNotificationPermission() {
+        await ensureAudioContext();
+        const currentPermission = "Notification" in window ? Notification.permission : "unsupported";
+        console.log("[pomodoro] notify button clicked, Notification.permission =", currentPermission);
+
+        if (!("Notification" in window)) {
+          setStatus("当前浏览器不支持通知");
+          renderNotificationStatus("error", "当前浏览器不支持通知，这个浏览器里无法弹出系统提醒。");
+          return;
+        }
+
+        try {
+          if (Notification.permission === "granted") {
+            setStatus("浏览器提醒已开启");
+            renderNotificationStatus();
+            return;
+          }
+
+          if (Notification.permission === "denied") {
+            setStatus("浏览器已拒绝通知权限");
+            renderNotificationStatus();
+            return;
+          }
+
+          renderNotificationStatus("pending", "正在请求通知权限，请留意浏览器弹窗并选择是否允许。");
+          const result = await Notification.requestPermission();
+          if (result === "granted") {
+            setStatus("浏览器提醒已开启");
+          } else if (result === "denied") {
+            setStatus("浏览器已拒绝通知权限");
+          } else {
+            setStatus("浏览器提醒尚未授权");
+          }
+          renderNotificationStatus();
+        } catch (error) {
+          setStatus("浏览器提醒授权失败");
+          renderNotificationStatus("error", "通知权限请求失败了。你可以刷新页面后重试，或者在浏览器的网站设置里手动允许通知。");
+        }
+      }
+
+      function renderNotificationStatus(overrideState, overrideText) {
+        if (!elements.notificationStatus) {
+          return;
+        }
+
+        let visualState = overrideState || "idle";
+        let message = overrideText || "";
+
+        if (message) {
+          state.notificationFeedbackState = visualState;
+          state.notificationFeedbackText = message;
+        } else if (state.notificationFeedbackText && overrideState) {
+          visualState = state.notificationFeedbackState;
+          message = state.notificationFeedbackText;
+        }
+
+        if (!("Notification" in window)) {
+          visualState = "error";
+          message = message || "通知状态：当前浏览器不支持通知，这个浏览器里无法弹出系统提醒。";
+        } else if (!message) {
+          if (Notification.permission === "granted") {
+            visualState = "success";
+            message = "通知已开启";
+          } else if (Notification.permission === "denied") {
+            visualState = "error";
+            message = "浏览器已拒绝通知权限，请手动在浏览器地址栏左侧的锁形图标 → 网站设置 → 通知 → 允许。改完后刷新页面，或先清掉当前网站的权限设置再重新授权。";
+          } else {
+            visualState = "idle";
+            message = "通知状态：尚未授权。点击按钮后会弹出浏览器授权窗口。";
+          }
+        }
+
+        state.notificationFeedbackState = visualState;
+        state.notificationFeedbackText = message;
+        elements.notificationStatus.dataset.state = visualState;
+        elements.notificationStatus.textContent = message;
+      }
+
+      function notifyUser(title, body) {
+        if (!("Notification" in window)) {
+          return;
+        }
+
+        if (Notification.permission === "granted") {
+          renderNotificationStatus("success", "通知已开启");
+        }
+
+        if (Notification.permission !== "granted") {
+          return;
+        }
+
+        try {
+          new Notification(title, { body });
+        } catch (error) {
+          setStatus("通知已准备，但浏览器拦截了弹窗");
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
